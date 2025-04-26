@@ -33,7 +33,7 @@ class FactScorer(object):
         self.retrieval = {}
         self.npm = {}
         self.batch_size = batch_size  # batch size for retrieval
-        self.openai_key = openai_key
+        self.openai_key = openai_key  # TODO(THAT): double check if this is needed
         self.abstain_detection_type = abstain_detection_type
 
         self.data_dir = data_dir
@@ -41,7 +41,7 @@ class FactScorer(object):
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
-        self.af_generator = None
+        self.atomic_fact_generator = None
         self.cost_estimate = cost_estimate
 
         if "llama" in model_name:
@@ -56,6 +56,7 @@ class FactScorer(object):
             self.lm = None
 
     def save_cache(self):
+        """TODO(THAT): Double check if the cache is saved"""
         if self.lm:
             self.lm.save_cache()
         if "npm" in self.model_name:
@@ -128,15 +129,16 @@ class FactScorer(object):
         if atomic_facts is not None:
             assert len(topics) == len(atomic_facts), "`topics` and `atomic_facts` should have the same length"
         else:
-            if self.af_generator is None:
-                self.af_generator = AtomicFactGenerator(key_path=self.openai_key,
-                                                        demon_dir=os.path.join(self.data_dir, "demos"),
-                                                        gpt3_cache_file=os.path.join(self.cache_dir, "InstructGPT.pkl"))
+            if self.atomic_fact_generator is None:
+                self.atomic_fact_generator = AtomicFactGenerator(key_path=self.openai_key,
+                                                                 demon_dir=os.path.join(self.data_dir, "demos"),
+                                                                 gpt3_cache_file=os.path.join(self.cache_dir,
+                                                                                              "InstructGPT.pkl"))
 
             # estimate the total cost of atomic fact generation
             total_words = 0
             for gen in generations:
-                total_words += self.af_generator.run(gen, cost_estimate=self.cost_estimate)
+                total_words += self.atomic_fact_generator.run(gen, cost_estimate=self.cost_estimate)
 
             self.print_cost_estimates(total_words, task="atomic fact generation", model="davinci-003")
 
@@ -151,17 +153,17 @@ class FactScorer(object):
                     atomic_facts.append(None)
                     continue
                 # continue only when the response is not abstained
-                curr_afs, _ = self.af_generator.run(gen)
+                curr_afs, _ = self.atomic_fact_generator.run(gen)
                 curr_afs = [fact for _, facts in curr_afs for fact in facts]
                 if len(curr_afs) == 0:
                     atomic_facts.append(None)
                 else:
                     atomic_facts.append(curr_afs)
                 if len(atomic_facts) % 10 == 0:
-                    self.af_generator.save_cache()
+                    self.atomic_fact_generator.save_cache()
 
             assert len(atomic_facts) == len(topics)
-            self.af_generator.save_cache()
+            self.atomic_fact_generator.save_cache()
 
         respond_ratio = np.mean([facts is not None for facts in atomic_facts])
 
@@ -342,6 +344,7 @@ if __name__ == '__main__':
                     cost_estimate=args.cost_estimate,
                     abstain_detection_type=args.abstain_detection_type)
 
+    # <editor-fold desc="Load the input data WITH or WITHOUT atomic facts">
     total = 0
     topics, generations, atomic_facts = [], [], []
     with open(args.input_path) as f:
@@ -355,12 +358,14 @@ if __name__ == '__main__':
                 topics.append(data_point["topic"])
                 generations.append(data_point["output"])
                 atomic_facts.append(
-                    [atom["text"] for sent in data_point["annotations"] for atom in sent["model-atomic-facts"]])
+                    [atomic["text"] for sentence in data_point["annotations"] for atomic in
+                     sentence["model-atomic-facts"]])
             else:
                 topics.append(data_point["topic"])
                 generations.append(data_point["output"])
             if args.n_samples is not None and total == args.n_samples:
                 break
+    # </editor-fold>
 
     output = fs.get_score(topics=topics,
                           generations=generations,
