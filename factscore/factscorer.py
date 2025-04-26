@@ -21,7 +21,7 @@ class FactScorer(object):
                  data_dir=".cache/factscore",
                  model_dir=".cache/factscore",
                  cache_dir=".cache/factscore",
-                 openai_key="api.key",
+                 openai_key_path="api.key",
                  cost_estimate="consider_cache",
                  abstain_detection_type=None,
                  batch_size=256):
@@ -33,7 +33,7 @@ class FactScorer(object):
         self.retrieval = {}
         self.npm = {}
         self.batch_size = batch_size  # batch size for retrieval
-        self.openai_key = openai_key  # TODO(THAT): double check if this is needed
+        self.openai_key_path = openai_key_path  # TODO(THAT): double check if this is needed
         self.abstain_detection_type = abstain_detection_type
 
         self.data_dir = data_dir
@@ -51,7 +51,7 @@ class FactScorer(object):
         elif "ChatGPT" in model_name:
             self.lm = OpenAIModel("ChatGPT",
                                   cache_file=os.path.join(cache_dir, "ChatGPT.pkl"),
-                                  key_path=openai_key)
+                                  key_path=openai_key_path)
         else:
             self.lm = None
 
@@ -119,18 +119,22 @@ class FactScorer(object):
         if knowledge_source not in self.retrieval:
             self.register_knowledge_source(knowledge_source)
 
-        if type(topics) == type(generations) == str:
-            topics = [topics]
-            generations = [generations]
-        else:
-            assert type(topics) == type(generations) == list, "`topics` and `generations` should be lists."
-            assert len(topics) == len(generations), "`topics` and `generations` should have the same length"
+        # if type(topics) == type(generations) == str:
+        #     topics = [topics]
+        #     generations = [generations]
+        # else:
+        #     assert type(topics) == type(generations) == list, "`topics` and `generations` should be lists."
+        #     assert len(topics) == len(generations), "`topics` and `generations` should have the same length"
+
+        assert type(topics) == type(generations) == list, "`topics` and `generations` should be lists."
+        assert len(topics) == len(generations), "`topics` and `generations` should have the same length"
 
         if atomic_facts is not None:
             assert len(topics) == len(atomic_facts), "`topics` and `atomic_facts` should have the same length"
         else:
+            # generate atomic facts for the responses
             if self.atomic_fact_generator is None:
-                self.atomic_fact_generator = AtomicFactGenerator(key_path=self.openai_key,
+                self.atomic_fact_generator = AtomicFactGenerator(key_path=self.openai_key_path,
                                                                  demon_dir=os.path.join(self.data_dir, "demos"),
                                                                  gpt3_cache_file=os.path.join(self.cache_dir,
                                                                                               "InstructGPT.pkl"))
@@ -340,7 +344,7 @@ if __name__ == '__main__':
                     data_dir=args.data_dir,
                     model_dir=args.model_dir,
                     cache_dir=args.cache_dir,
-                    openai_key=args.openai_key,
+                    openai_key_path=args.openai_key,  # key path
                     cost_estimate=args.cost_estimate,
                     abstain_detection_type=args.abstain_detection_type)
 

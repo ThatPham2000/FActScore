@@ -88,15 +88,15 @@ You can prompt your LM with your own prompt (we used `Question: Tell me a bio of
 ```python
 from factscore.factscorer import FactScorer
 
-fs = FactScorer(openai_key="...")
+fs = FactScorer(openai_key_path="...")
 
 # topics: list of strings (human entities used to generate bios)
 # generations: list of strings (model generations)
 out = fs.get_score(topics, generations, gamma=10)
-print (out["score"]) # FActScore
-print (out["init_score"]) # FActScore w/o length penalty
-print (out["respond_ratio"]) # % of responding (not abstaining from answering)
-print (out["num_facts_per_response"]) # average number of atomic facts per response
+print(out["score"])  # FActScore
+print(out["init_score"])  # FActScore w/o length penalty
+print(out["respond_ratio"])  # % of responding (not abstaining from answering)
+print(out["num_facts_per_response"])  # average number of atomic facts per response
 ```
 
 Alternatively, you can create a .jsonl file, where each line has `topic` (entity name, exactly same as the one from `.txt` file) and `output` (generation from LM), and then use a command line [above](#Running-FActScore-using-a-command-line).
