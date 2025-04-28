@@ -12,6 +12,8 @@ tqdm
 pandas
 numpy
 pybind11>=2.12
+requests
+urllib3==2.2.2
 
 # sentence_transformers>=2.2.2
 # transformers>=4.29.2
