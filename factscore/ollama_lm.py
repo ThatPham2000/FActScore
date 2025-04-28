@@ -1,0 +1,63 @@
+from factscore.lm import LM
+import requests
+
+
+class Ollama(LM):
+    def __init__(self, model_name='llama3.2-vision:11b', cache_file=None):
+        self.model_name = model_name
+        self.save_interval = 1
+        super().__init__(cache_file)
+
+    def load_model(self):
+        # Load the Ollama model
+        self.model = self.model_name
+
+    def _generate(self, prompt, max_sequence_length=2048, max_output_length=128):
+        if self.add_n % self.save_interval == 0:
+            print('TRUE dmm')
+            self.save_cache()
+
+        # Call the Ollama API to generate text
+        response = call_ollama(prompt, model=self.model_name)
+
+        # Get the output from the response
+        output = response["response"]
+        return output, response
+
+
+def call_ollama(prompt, model):
+    url = 'http://localhost:11434/api/generate'
+    data = f'''{{
+            "model": "{model}",
+            "prompt": "{prompt}",
+            "stream": false
+        }}'''
+
+    response = requests.post(url, data=data)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Error: {response.status_code}, {response.text}")
+
+
+# Example usage
+# if __name__ == "__main__":
+#     prompt = "Why is the sky blue?, response with raw text (without md formatting)"
+#     output, response = call_ollama(prompt=prompt, model='llama3.2-vision:11b')
+#     print("Generated Output:", output)
+#     print("Generated Response:", response)
+
+
+if __name__ == "__main__":
+    ollama_model = Ollama(model_name='llama3.2-vision:11b', cache_file='ollama_cache.pkl')
+    prompt = "Response with raw text (without md formatting): Why is the sky blue?"
+    output, response = ollama_model.generate(prompt)
+    print("add_n:", ollama_model.add_n)
+    print("Generated Output:", output)
+    print("Generated Response:", response)
+
+    prompt2 = "Response with raw text (without md formatting): Why is the fire red?"
+    output2, response2 = ollama_model.generate(prompt2)
+    print("add_n:", ollama_model.add_n)
+    print("Generated Output:", output2)
+    print("Generated Response:", response2)
