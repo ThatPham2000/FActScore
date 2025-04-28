@@ -30,8 +30,8 @@ class LM(object):
             generated = self._generate(prompt, max_sequence_length=max_sequence_length, max_output_length=max_output_length)
 
         self.cache_dict[cache_key] = generated
-        self.add_n += 1
-        return generated
+        self.add_n += 1 # increment the number of samples generated
+        return generated # (output: str, response: Any)
 
     def save_cache(self):
         if self.add_n == 0:

@@ -18,7 +18,7 @@ class OpenAIModel(LM):
     def load_model(self):
         # load api key
         key_path = self.key_path
-        assert os.path.exists(key_path), f"Please place your OpenAI APT Key in {key_path}."
+        assert os.path.exists(key_path), f"Please place your OpenAI API Key in {key_path}."
         with open(key_path, 'r') as f:
             api_key = f.readline()
         openai.api_key = api_key.strip()
@@ -33,7 +33,7 @@ class OpenAIModel(LM):
             # Construct the prompt send to ChatGPT
             message = [{"role": "user", "content": prompt}]
             # Call API
-            response = call_ChatGPT(message, temp=self.temp, max_len=max_sequence_length)
+            response = call_ChatGPT(message, model_name="gpt-3.5-turbo",temp=self.temp, max_len=max_sequence_length)
             # Get the output from the response
             output = response["choices"][0]["message"]["content"]
             return output, response
@@ -46,7 +46,7 @@ class OpenAIModel(LM):
         else:
             raise NotImplementedError()
 
-def call_ChatGPT(message, model_name="gpt-3.5-turbo", max_len=1024, temp=0.7, verbose=False):
+def call_ChatGPT(message, model_name, max_len=1024, temp=0.7, verbose=False):
     # call GPT-3 API until result is provided and then return it
     response = None
     received = False

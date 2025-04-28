@@ -171,15 +171,15 @@ class FactScorer(object):
 
         respond_ratio = np.mean([facts is not None for facts in atomic_facts])
 
-        if "ChatGPT" in self.model_name:
-            # estimate the total cost of response generation
-            total_words = 0
-            for topic, generation, facts in zip(topics, generations, atomic_facts):
-                if facts is not None:
-                    total_words += self._get_score(topic, generation, facts, knowledge_source,
-                                                   cost_estimate=self.cost_estimate)
-
-            self.print_cost_estimates(total_words, task="factscore evaluation", model="gpt-3.5-turbo")
+        # if "ChatGPT" in self.model_name:
+        #     # estimate the total cost of response generation
+        #     total_words = 0
+        #     for topic, generation, facts in zip(topics, generations, atomic_facts):
+        #         if facts is not None:
+        #             total_words += self._get_score(topic, generation, facts, knowledge_source,
+        #                                            cost_estimate=self.cost_estimate)
+        #
+        #     self.print_cost_estimates(total_words, task="factscore evaluation", model="gpt-3.5-turbo")
 
         if verbose:
             topics = tqdm(topics)
@@ -206,10 +206,12 @@ class FactScorer(object):
 
         self.save_cache()
 
-        out = {"score": np.mean(scores),
-               "respond_ratio": respond_ratio,
-               "decisions": decisions,
-               "num_facts_per_response": np.mean([len(d) for d in decisions if d is not None])}
+        out = {
+            "score": np.mean(scores),
+            "respond_ratio": respond_ratio,
+            "decisions": decisions,
+            "num_facts_per_response": np.mean([len(d) for d in decisions if d is not None]),
+        }
 
         if gamma:
             out["init_score"] = np.mean(init_scores)
