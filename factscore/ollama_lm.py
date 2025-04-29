@@ -5,7 +5,7 @@ import requests
 class Ollama(LM):
     def __init__(self, model_name='llama3.2-vision:11b', cache_file=None):
         self.model_name = model_name
-        self.save_interval = 1
+        self.save_interval = 100
         super().__init__(cache_file)
 
     def load_model(self):
@@ -14,7 +14,6 @@ class Ollama(LM):
 
     def _generate(self, prompt, max_sequence_length=2048, max_output_length=128):
         if self.add_n % self.save_interval == 0:
-            print('TRUE dmm')
             self.save_cache()
 
         # Call the Ollama API to generate text
@@ -27,9 +26,11 @@ class Ollama(LM):
 
 def call_ollama(prompt, model):
     url = 'http://localhost:11434/api/generate'
+
+    normalized_prompt = "\\n".join(prompt.splitlines())
     data = f'''{{
             "model": "{model}",
-            "prompt": "{prompt}",
+            "prompt": "{normalized_prompt}",
             "stream": false
         }}'''
 
@@ -50,6 +51,7 @@ def call_ollama(prompt, model):
 
 if __name__ == "__main__":
     ollama_model = Ollama(model_name='llama3.2-vision:11b', cache_file='ollama_cache.pkl')
+
     prompt = "Response with raw text (without md formatting): Why is the sky blue?"
     output, response = ollama_model.generate(prompt)
     print("add_n:", ollama_model.add_n)
