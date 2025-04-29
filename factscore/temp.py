@@ -102,7 +102,6 @@ Please breakdown the following sentence into independent facts: Michael Collins 
 
 Please breakdown the following sentence into independent facts: Thierry Henry (born 17 August 1977) is a French professional football coach, pundit, and former player.'''
 
-
     normalized_prompt2 = "\\n".join(prompt2.splitlines())
     data = f'''{{
                     "model": "{model}",
@@ -110,19 +109,15 @@ Please breakdown the following sentence into independent facts: Thierry Henry (b
                     "stream": false
                 }}'''
 
-    print(data)
-
-    r = requests.post(url,
-                      data=data,
-                      stream=False, )
-
-    if r.status_code == 200:
-        print(r.json())
-    else:
-        print(f"Error: {r.status_code}")
-        print(f'Text: {r.text}')
-        print(f'Content: {r.content}')
-        print(r.raise_for_status())
+    try:
+        r = requests.post(url,
+                          data=data,
+                          stream=False, )
+        r.raise_for_status()
+        if r.status_code == 200:
+            print(r.json())
+    except requests.exceptions.RequestException as e:
+        print(f'Error: {e.response.text}')
 
 
 def test_pickle():

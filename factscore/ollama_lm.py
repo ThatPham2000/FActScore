@@ -34,11 +34,15 @@ def call_ollama(prompt, model):
             "stream": false
         }}'''
 
-    response = requests.post(url, data=data)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception(f"Error: {response.status_code}, {response.text}")
+    try:
+        res = requests.post(url, data=data)
+        res.raise_for_status()
+        if res.status_code == 200:
+            return res.json()
+    except requests.exceptions.RequestException as e:
+        print(f'Status code: {e.response.status_code}')
+        print(f'Error: {e.response.text}')
+        return None
 
 
 # Example usage
