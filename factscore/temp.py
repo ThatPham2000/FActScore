@@ -1,4 +1,8 @@
+import string
+
 import requests
+
+from factscore.atomic_facts import detect_initials, extract_numeric_values
 
 
 def get_stream():
@@ -136,11 +140,26 @@ def test_pickle():
     print(loaded_data['complex'])
 
 
+def detect_initials_test():
+    text = "J. K. Rowling is a famous author. A. B. Smith is a fictional name."
+    initials = detect_initials(text)
+    print(initials)
+
+
+def extract_numeric_values_test():
+    text = "The price is $1987654.50 and the discount is 20.0901%.\nThe total is 100,9876."
+    numeric_values = extract_numeric_values(text)
+    print(numeric_values)  # Output: {'50', '20', '100', '80'}
+
+
 def main():
     # get_stream()
-    generate()
+    # generate()
     # test_pickle()
 
+    # extract_numeric_values_test()
+
+    print(string.punctuation)
 
 if __name__ == '__main__':
     main()
