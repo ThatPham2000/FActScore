@@ -284,7 +284,7 @@ class FactScorer(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    # <editor-fold desc="Required arguments">
+    # <editor-fold desc="Required arguments definition">
     parser.add_argument('--input_path',
                         type=str,
                         default="data/labeled/InstructGPT.jsonl")
@@ -293,7 +293,7 @@ if __name__ == '__main__':
                         default="retrieval+ChatGPT")
     # </editor-fold>
 
-    # <editor-fold desc="Optional arguments">
+    # <editor-fold desc="Optional arguments definition">
     parser.add_argument('--gamma',
                         type=int,
                         default=10,
@@ -338,17 +338,40 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # <editor-fold desc="Arguments parsing">
+    model_name = args.model_name
+    """["retrieval+llama", "retrieval+llama+npm", "retrieval+ChatGPT", "npm", "retrieval+ChatGPT+npm"]"""
+
+    data_dir = args.data_dir
+    """.cache/factscore/"""
+
+    model_dir = args.model_dir
+    """.cache/factscore/"""
+
+    cache_dir = args.cache_dir
+    """.cache/factscore/"""
+
+    openai_key_path = args.openai_key
+
+    cost_estimate = args.cost_estimate
+    """["consider_cache", "ignore_cache"]"""
+
+    abstain_detection_type = args.abstain_detection_type
+    """["perplexity_ai", "generic", "none"]"""
+    # </editor-fold>
+
+    # Config logging
     logging.basicConfig(format='%(asctime)s - %(name)s - %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.ERROR if args.print_rate_limit_error else logging.CRITICAL)
 
-    fs = FactScorer(model_name=args.model_name,
-                    data_dir=args.data_dir,
-                    model_dir=args.model_dir,
-                    cache_dir=args.cache_dir,
-                    openai_key_path=args.openai_key,  # key path
-                    cost_estimate=args.cost_estimate,
-                    abstain_detection_type=args.abstain_detection_type)
+    fs = FactScorer(model_name=model_name,
+                    data_dir=data_dir,
+                    model_dir=model_dir,
+                    cache_dir=cache_dir,
+                    openai_key_path=openai_key_path,
+                    cost_estimate=cost_estimate,
+                    abstain_detection_type=abstain_detection_type)
 
     # <editor-fold desc="Load the input data WITH or WITHOUT atomic facts">
     total = 0
