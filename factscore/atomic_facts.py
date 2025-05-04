@@ -395,11 +395,11 @@ def main(demon_dir: str):
     print(para_breaks)
 
 
+# python -m factscore.atomic_facts --demon_dir=".cache/factscore/demos"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--demon_dir',
                         type=str,
                         default="../.cache/factscore/demos")
-    # default=os.path.join("../.cache/factscore", "demos"))
     args = parser.parse_args()
     main(args.demon_dir)
