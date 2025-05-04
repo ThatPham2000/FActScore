@@ -1,6 +1,7 @@
 import string
 
 import requests
+import ollama
 
 from factscore.atomic_facts import detect_initials, extract_numeric_values
 
@@ -106,22 +107,24 @@ Please breakdown the following sentence into independent facts: Michael Collins 
 
 Please breakdown the following sentence into independent facts: Thierry Henry (born 17 August 1977) is a French professional football coach, pundit, and former player.'''
 
-    normalized_prompt2 = "\\n".join(prompt2.splitlines())
-    data = f'''{{
-                    "model": "{model}",
-                    "prompt": "{normalized_prompt2}",
-                    "stream": false
-                }}'''
-
-    try:
-        r = requests.post(url,
-                          data=data,
-                          stream=False, )
-        r.raise_for_status()
-        if r.status_code == 200:
-            print(r.json())
-    except requests.exceptions.RequestException as e:
-        print(f'Error: {e.response.text}')
+    # normalized_prompt2 = "\\n".join(prompt2.splitlines())
+    # data = f'''{{
+    #                 "model": "{model}",
+    #                 "prompt": "{normalized_prompt2}",
+    #                 "stream": false
+    #             }}'''
+    #
+    # try:
+    #     r = requests.post(url,
+    #                       data=data,
+    #                       stream=False, )
+    #     r.raise_for_status()
+    #     if r.status_code == 200:
+    #         print(r.json())
+    # except requests.exceptions.RequestException as e:
+    #     print(f'Error: {e.response.text}')
+    rs = ollama.generate(model=model, prompt=prompt2)
+    print(rs.response)
 
 
 def test_pickle():
@@ -154,12 +157,12 @@ def extract_numeric_values_test():
 
 def main():
     # get_stream()
-    # generate()
+    generate()
     # test_pickle()
 
     # extract_numeric_values_test()
 
-    print(string.punctuation)
+    # print(string.punctuation)
 
 if __name__ == '__main__':
     main()
