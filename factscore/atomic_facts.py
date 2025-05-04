@@ -1,3 +1,4 @@
+import argparse
 import json
 import numpy as np
 import re
@@ -381,9 +382,9 @@ def fix_sentence_splitter(curr_sentences, initials):
     return sentences
 
 
-def main():
+def main(demon_dir: str):
     generator = AtomicFactGenerator("api.key",
-                                    demon_dir=os.path.join("../.cache/factscore", "demos"),
+                                    demon_dir=demon_dir,
                                     cache_file="cache.pkl")
 
     statement = "Thierry Henry (born 17 August 1977) is a French professional football coach, pundit, and former player. He is considered one of the greatest strikers of all time, and one the greatest players of the Premier League history. He has been named Arsenal F.C's greatest ever player.\n\nHenry made his professional debut with Monaco in 1994 before signing for defending Serie A champions Juventus. However, limited playing time, coupled with disagreements with the club's hierarchy, led to him signing for Premier League club Arsenal for £11 million in 1999.\n\nJ. K. Rowling is a famous author. A. B. Smith is a fictional name."
@@ -395,4 +396,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--demon_dir',
+                        type=str,
+                        default="../.cache/factscore/demos")
+    # default=os.path.join("../.cache/factscore", "demos"))
+    args = parser.parse_args()
+    main(args.demon_dir)
