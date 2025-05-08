@@ -10,6 +10,7 @@ from factscore.abstain_detection import is_response_abstained
 from factscore.atomic_facts import AtomicFactGenerator
 from factscore.clm import CLM
 from factscore.npm import NPM
+from factscore.ollama_lm import Ollama
 from factscore.openai_lm import OpenAIModel
 from factscore.retrieval import DocDB, Retrieval
 
@@ -26,14 +27,14 @@ class FactScorer(object):
                  abstain_detection_type=None,
                  batch_size=256):
         assert model_name in ["retrieval+llama", "retrieval+llama+npm", "retrieval+ChatGPT", "npm",
-                              "retrieval+ChatGPT+npm"]
+                              "retrieval+ChatGPT+npm", "retrieval+ollama"]
         self.model_name = model_name
 
         self.db = {}
         self.retrieval = {}
         self.npm = {}
         self.batch_size = batch_size  # batch size for retrieval
-        self.openai_key_path = openai_key_path  # TODO(THAT): double check if this is needed
+        self.openai_key_path = openai_key_path
         self.abstain_detection_type = abstain_detection_type
 
         self.data_dir = data_dir
@@ -44,7 +45,9 @@ class FactScorer(object):
         self.atomic_fact_generator = None
         self.cost_estimate = cost_estimate
 
-        if "llama" in model_name:
+        if "ollama" in model_name:
+            self.lm = Ollama(model_name='llama3.2-vision:11b', cache_file=os.path.join(cache_dir, "ollama.pkl"))
+        elif "llama" in model_name:
             self.lm = CLM("inst-llama-7B",
                           model_dir=os.path.join(model_dir, "inst-llama-7B"),
                           cache_file=os.path.join(cache_dir, "inst-llama-7B.pkl"))
@@ -119,15 +122,12 @@ class FactScorer(object):
         if knowledge_source not in self.retrieval:
             self.register_knowledge_source(knowledge_source)
 
-        # if type(topics) == type(generations) == str:
-        #     topics = [topics]
-        #     generations = [generations]
-        # else:
-        #     assert type(topics) == type(generations) == list, "`topics` and `generations` should be lists."
-        #     assert len(topics) == len(generations), "`topics` and `generations` should have the same length"
-
-        assert type(topics) == type(generations) == list, "`topics` and `generations` should be lists."
-        assert len(topics) == len(generations), "`topics` and `generations` should have the same length"
+        if type(topics) == type(generations) == str:
+            topics = [topics]
+            generations = [generations]
+        else:
+            assert type(topics) == type(generations) == list, "`topics` and `generations` should be lists."
+            assert len(topics) == len(generations), "`topics` and `generations` should have the same length"
 
         if atomic_facts is not None:
             assert len(topics) == len(atomic_facts), "`topics` and `atomic_facts` should have the same length"
@@ -186,12 +186,12 @@ class FactScorer(object):
 
         scores = []
         init_scores = []
-        decisions = []
+        decisions = [] # [[{"atom": atom, "is_supported": is_supported}]]
         for topic, generation, facts in zip(topics, generations, atomic_facts):
             if facts is None:
                 decisions.append(None)
             else:
-                decision = self._get_score(topic, generation, facts, knowledge_source)
+                decision = self._get_score(topic, generation, facts, knowledge_source) # [{'atom': atom, 'is_supported': is_supported}]
                 score = np.mean([d["is_supported"] for d in decision])
 
                 if gamma:
@@ -287,10 +287,10 @@ if __name__ == '__main__':
     # <editor-fold desc="Required arguments definition">
     parser.add_argument('--input_path',
                         type=str,
-                        default="data/labeled/InstructGPT.jsonl")
+                        default="../data/labeled/InstructGPT.jsonl")
     parser.add_argument('--model_name',
                         type=str,
-                        default="retrieval+ChatGPT")
+                        default="retrieval+ollama")
     # </editor-fold>
 
     # <editor-fold desc="Optional arguments definition">
@@ -358,6 +358,10 @@ if __name__ == '__main__':
 
     abstain_detection_type = args.abstain_detection_type
     """["perplexity_ai", "generic", "none"]"""
+
+    gamma = args.gamma
+    """hyperparameter for length penalty
+    default=10"""
     # </editor-fold>
 
     # Config logging
@@ -375,7 +379,16 @@ if __name__ == '__main__':
 
     # <editor-fold desc="Load the input data WITH or WITHOUT atomic facts">
     total = 0
-    topics, generations, atomic_facts = [], [], []
+
+    topics = []
+    """[entity_name]"""
+
+    generations = []
+    """[output_generation]"""
+
+    atomic_facts = []
+    """[[model-atomic-facts_of_1_output_generation]]"""
+
     with open(args.input_path) as f:
         for line in f:
             data_point = json.loads(line)
@@ -398,7 +411,7 @@ if __name__ == '__main__':
 
     output = fs.get_score(topics=topics,
                           generations=generations,
-                          gamma=args.gamma,
+                          gamma=gamma,
                           atomic_facts=atomic_facts if args.use_atomic_facts else None,
                           knowledge_source=args.knowledge_source,
                           verbose=args.verbose)
