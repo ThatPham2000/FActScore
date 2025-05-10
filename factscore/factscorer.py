@@ -132,12 +132,16 @@ class FactScorer(object):
         if atomic_facts is not None:
             assert len(topics) == len(atomic_facts), "`topics` and `atomic_facts` should have the same length"
         else:
+            # TODO(THAT): debug only.
+            # topics = topics[0:2]
+            # generations = generations[0:2]
+
             # generate atomic facts for the responses
             if self.atomic_fact_generator is None:
                 self.atomic_fact_generator = AtomicFactGenerator(key_path=self.openai_key_path,
                                                                  demon_dir=os.path.join(self.data_dir, "demos"),
                                                                  cache_file=os.path.join(self.cache_dir,
-                                                                                         "InstructGPT.pkl"))
+                                                                                         "ollama.pkl"))
 
             # estimate the total cost of atomic fact generation
             total_words = 0
@@ -186,12 +190,14 @@ class FactScorer(object):
 
         scores = []
         init_scores = []
-        decisions = [] # [[{"atom": atom, "is_supported": is_supported}]]
+        decisions = []  # [[{"atom": atom, "is_supported": is_supported}]]
+
         for topic, generation, facts in zip(topics, generations, atomic_facts):
             if facts is None:
                 decisions.append(None)
             else:
-                decision = self._get_score(topic, generation, facts, knowledge_source) # [{'atom': atom, 'is_supported': is_supported}]
+                decision = self._get_score(topic, generation, facts,
+                                           knowledge_source)  # [{'atom': atom, 'is_supported': is_supported}]
                 score = np.mean([d["is_supported"] for d in decision])
 
                 if gamma:
