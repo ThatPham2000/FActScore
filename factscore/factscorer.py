@@ -133,8 +133,8 @@ class FactScorer(object):
             assert len(topics) == len(atomic_facts), "`topics` and `atomic_facts` should have the same length"
         else:
             # TODO(THAT): debug only.
-            # topics = topics[0:2]
-            # generations = generations[0:2]
+            # topics = topics[0:5]
+            # generations = generations[0:5]
 
             # generate atomic facts for the responses
             if self.atomic_fact_generator is None:
