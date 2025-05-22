@@ -180,18 +180,24 @@ class FactScorer(object):
         scores = []
         init_scores = []
         decisions = []
+
+        # for debugging
+        # topics = topics[0:5]
+        # generations = generations[0:5]
+        # atomic_facts = atomic_facts[0:5]
+
         for topic, generation, facts in zip(topics, generations, atomic_facts):
             if facts is None:
                 decisions.append(None)
             else:
                 decision = self._get_score(topic, generation, facts, knowledge_source)
                 score = np.mean([d["is_supported"] for d in decision])
-                
+
                 if gamma:
                     init_scores.append(score)
                     penalty = 1.0 if len(facts)>gamma else np.exp(1-gamma/len(facts))
                     score = penalty * score
-                
+
                 decisions.append(decision)
                 scores.append(score)
                 if len(scores) % 10 == 0:
@@ -206,7 +212,7 @@ class FactScorer(object):
 
         if gamma:
             out["init_score"] = np.mean(init_scores)
-        
+
         return out
 
     def _get_score(self, topic, generation, atomic_facts, knowledge_source, cost_estimate=None):
@@ -311,7 +317,7 @@ if __name__ == '__main__':
                         action="store_true")
     parser.add_argument('--verbose',
                         action="store_true",
-                        help="for printing out the progress bar")    
+                        help="for printing out the progress bar")
     parser.add_argument('--print_rate_limit_error',
                         action="store_true",
                         help="for printing out rate limit error when using OpenAI keys")
