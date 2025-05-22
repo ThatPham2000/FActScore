@@ -10,6 +10,7 @@ from factscore.abstain_detection import is_response_abstained
 from factscore.atomic_facts import AtomicFactGenerator
 from factscore.clm import CLM
 from factscore.npm import NPM
+from factscore.ollama_lm import Ollama
 from factscore.openai_lm import OpenAIModel
 from factscore.retrieval import DocDB, Retrieval
 
@@ -24,7 +25,7 @@ class FactScorer(object):
                  cost_estimate="consider_cache",
                  abstain_detection_type=None,
                  batch_size=256):
-        assert model_name in ["retrieval+llama", "retrieval+llama+npm", "retrieval+ChatGPT", "npm", "retrieval+ChatGPT+npm"]
+        assert model_name in ["retrieval+llama", "retrieval+llama+npm", "retrieval+ChatGPT", "npm", "retrieval+ChatGPT+npm", "retrieval+ollama"]
         self.model_name = model_name
 
         self.db = {}
@@ -42,7 +43,9 @@ class FactScorer(object):
         self.af_generator = None
         self.cost_estimate = cost_estimate
 
-        if "llama" in model_name:
+        if "ollama" in model_name:
+            self.lm = Ollama(model_name='llama3.2-vision:11b', cache_file=os.path.join(cache_dir, "llama3.pkl"))
+        elif "llama" in model_name:
             self.lm = CLM("inst-llama-7B",
                           model_dir=os.path.join(model_dir, "inst-llama-7B"),
                           cache_file=os.path.join(cache_dir, "inst-llama-7B.pkl"))
@@ -128,14 +131,14 @@ class FactScorer(object):
             if self.af_generator is None:
                 self.af_generator = AtomicFactGenerator(key_path=self.openai_key,
                                                         demon_dir=os.path.join(self.data_dir, "demos"),
-                                                        gpt3_cache_file=os.path.join(self.cache_dir, "InstructGPT.pkl"))
+                                                        cache_file=os.path.join(self.cache_dir, "llama3_af.pkl"))
 
             # estimate the total cost of atomic fact generation
             total_words = 0
             for gen in generations:
                 total_words += self.af_generator.run(gen, cost_estimate=self.cost_estimate)
 
-            self.print_cost_estimates(total_words, task="atomic fact generation", model="davinci-003")
+            # self.print_cost_estimates(total_words, task="atomic fact generation", model="davinci-003")
 
             if verbose:
                 topics = tqdm(topics)
@@ -273,7 +276,7 @@ if __name__ == '__main__':
                         default="data/labeled/InstructGPT.jsonl")
     parser.add_argument('--model_name',
                         type=str,
-                        default="retrieval+ChatGPT")
+                        default="retrieval+ollama")
     parser.add_argument('--gamma',
                         type=int,
                         default=10,
