@@ -1,10 +1,20 @@
 torch
 sentence_transformers
 transformers
-pysqlite3
+#pysqlite3
 openai
 rank_bm25
 spacy
+
+pysqlite-binary
+nltk
+tqdm
+pandas
+numpy
+pybind11>=2.12
+requests
+urllib3==2.2.2
+ollama
 
 # sentence_transformers>=2.2.2
 # transformers>=4.29.2
